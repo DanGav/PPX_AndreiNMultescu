@@ -4,6 +4,7 @@ using Visa;
 using Loyalty;
 using System;
 using System.Linq;
+using System.Reflection;
 
 namespace PPX_PromotionEngine
 {
@@ -35,67 +36,87 @@ namespace PPX_PromotionEngine
             var PromItems = promotionProvider.GetDiscountableItemIds();
 
 
-            ////Type t2 = typeof(LoyaltyPromotionEngine);
-            ////Type t = Type.GetType($"{t2.AssemblyQualifiedName}");
-            ////object o = Activator.CreateInstance<t> ;
 
-            //List<Type> engines = new List<Type>
-            //{
-            //    typeof(LoyaltyPromotionEngine),
-            //    typeof(VisaPromotionEngine)
-            //};
-            ////object obj = Activator.CreateInstance(engines[0]);
-            //Type t = engines[0];
+            List<(object,List<int>)> Providers = new List<(object, List<int>)>();
             
-            //var obj2 = Activator.CreateInstance(t) as t.ReflectedType;
-           
+            foreach(var engine in Engines)
+            {
+                var provider= Activator.CreateInstance(engine);
+                MethodInfo method = engine.GetMethod("GetDiscountableItemIds");
+                var DiscountableItems = (List<int>)method.Invoke(provider, null);
+                Providers.Add((provider, DiscountableItems));
+            }
 
             foreach (Item item in items)
             {
                 var newPrice = item.Price;
-                if (PromItems.Contains(item.Id))
+                foreach((var prov , var list) in Providers)
                 {
-                    var discount = 0.0;
-                    try
+                    if (list.Contains(item.Id))
                     {
-                        
-                        discount = promotionProvider.GetItemDiscount(item.Id, item.Price);
-                    }
-                    catch
-                    {
-                        discount = 0.0;
+                        var discount = 0.0;
+
+                        try
+                        {
+                            MethodInfo method = prov.GetType().GetMethod("GetItemDiscount");
+                            object[] parametersArray = new object[] { item.Id, item.Price };
+                             discount = (double)method.Invoke(prov, parametersArray);
+                             
+                        }
+                        catch
+                        {
+                            discount = 0.0;
+                        }
+                        newPrice -= discount;
                     }
 
-                    newPrice -= discount;
                 }
-                if (DiscountItems.Contains(item.Id))
-                {
-                    var discount = 0.0;
-                    try
-                    {
-
-                        discount = discountProvider.GetItemDiscount(item.Id, item.Price);
-                    }
-                    catch
-                    {
-                        discount = 0.0;
-                    }
-
-                    newPrice -= discount;
-                }        
-                    result.Add((item, newPrice));                
+                result.Add((item, newPrice));
             }
+
+
+
+
+
+
+            //    foreach (Item item in items)
+            //{
+            //    var newPrice = item.Price;
+            //    if (PromItems.Contains(item.Id))
+            //    {
+            //        var discount = 0.0;
+            //        try
+            //        {
+                        
+            //            discount = promotionProvider.GetItemDiscount(item.Id, item.Price);
+            //        }
+            //        catch
+            //        {
+            //            discount = 0.0;
+            //        }
+
+            //        newPrice -= discount;
+            //    }
+            //    if (DiscountItems.Contains(item.Id))
+            //    {
+            //        var discount = 0.0;
+            //        try
+            //        {
+
+            //            discount = discountProvider.GetItemDiscount(item.Id, item.Price);
+            //        }
+            //        catch
+            //        {
+            //            discount = 0.0;
+            //        }
+
+            //        newPrice -= discount;
+            //    }        
+            //        result.Add((item, newPrice));                
+            //}
             return result;
 
         }
-
-
-
-        //T GetInstance<T>() where T : new()
-        //{
-        //    T instance = new T();
-        //    return instance;
-        //}
     }
 
 
