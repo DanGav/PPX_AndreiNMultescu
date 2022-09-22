@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Loyalty;
 using PPXModel;
+using Visa;
 
 namespace PPX_PromotionEngine
 {
@@ -7,6 +10,11 @@ namespace PPX_PromotionEngine
     {
         static void Main(string[] args)
         {
+            var Engines = new List<Type>
+            {
+                typeof(LoyaltyPromotionEngine),
+               typeof(VisaPromotionEngine)
+            };
             var items = new List<Item>
             {
                 new Item { Id = 1, Price = 20 },
@@ -23,7 +31,7 @@ namespace PPX_PromotionEngine
             };
 
             var promotionEngine = new PromotionEngine();
-            promotionEngine.GetDiscounts(items);
+            promotionEngine.GetDiscounts(items,Engines);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using PPX_Pos;
-
+using System;
 
 namespace TestPPX
 {
@@ -7,11 +7,16 @@ namespace TestPPX
     {
         static void Main(string[] args)
         {
-          //you can change this line
-          var Pos = new PassportX_POS(); 
-           
-          POS_Process.Load(Pos);
-           
+            string Country = "Italy";
+            Console.WriteLine("Input your country; \n");
+            Country = Console.ReadLine();
+
+            //you can change this line
+            var Pos = new PassportX_POS();
+            var Pos_New = new PPX_POS_Extension(Pos,Country);
+
+            POS_Process.Load(Pos_New);
+
         }
     }
 

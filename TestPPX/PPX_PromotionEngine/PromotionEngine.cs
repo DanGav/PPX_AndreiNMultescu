@@ -2,6 +2,8 @@
 using PPXModel;
 using Visa;
 using Loyalty;
+using System;
+using System.Linq;
 
 namespace PPX_PromotionEngine
 {
@@ -20,39 +22,87 @@ namespace PPX_PromotionEngine
         /// </summary>
         /// <param name="items">List of items</param>
         /// <returns></returns>
-        public List<(Item item, double newPrice)> GetDiscounts(List<Item> items)
+        /// 
+
+
+        public List<(Item item, double newPrice)> GetDiscounts(List<Item> items, List<Type> Engines)
         {
             List<Item> newItemList = new List<Item>();
             var result = new List<(Item, double)>();
+            var promotionProvider = new LoyaltyPromotionEngine();
+            var discountProvider = new VisaPromotionEngine();
+            var DiscountItems = discountProvider.GetDiscountableItemIds();
+            var PromItems = promotionProvider.GetDiscountableItemIds();
 
-            foreach (var item in items)
+
+            ////Type t2 = typeof(LoyaltyPromotionEngine);
+            ////Type t = Type.GetType($"{t2.AssemblyQualifiedName}");
+            ////object o = Activator.CreateInstance<t> ;
+
+            //List<Type> engines = new List<Type>
+            //{
+            //    typeof(LoyaltyPromotionEngine),
+            //    typeof(VisaPromotionEngine)
+            //};
+            ////object obj = Activator.CreateInstance(engines[0]);
+            //Type t = engines[0];
+            
+            //var obj2 = Activator.CreateInstance(t) as t.ReflectedType;
+           
+
+            foreach (Item item in items)
             {
-                var promotionProvider = new LoyaltyPromotionEngine();
-                var discountProvider = new VisaPromotionEngine();
+                var newPrice = item.Price;
+                if (PromItems.Contains(item.Id))
+                {
+                    var discount = 0.0;
+                    try
+                    {
+                        
+                        discount = promotionProvider.GetItemDiscount(item.Id, item.Price);
+                    }
+                    catch
+                    {
+                        discount = 0.0;
+                    }
 
-                if (promotionProvider.GetDiscountableItemIds().Contains(item.Id) && discountProvider.GetDiscountableItemIds().Contains(item.Id))
-                    newItemList.Add(item);
+                    newPrice -= discount;
+                }
+                if (DiscountItems.Contains(item.Id))
+                {
+                    var discount = 0.0;
+                    try
+                    {
 
-                //if item has no discount
-                else
-                    result.Add((item,item.Price));
-                
+                        discount = discountProvider.GetItemDiscount(item.Id, item.Price);
+                    }
+                    catch
+                    {
+                        discount = 0.0;
+                    }
+
+                    newPrice -= discount;
+                }        
+                    result.Add((item, newPrice));                
             }
-
-            foreach (var item in newItemList)
-            {
-                var promotionProvider = new LoyaltyPromotionEngine();
-                var discount = promotionProvider.GetItemDiscount(item.Id, item.Price);
-                var newPrice = item.Price - discount;
-
-                var discountProvider = new VisaPromotionEngine();
-                var discount2 = discountProvider.GetItemDiscount(item.Id, newPrice);
-                newPrice -= discount2;
-
-                result.Add((item, newPrice));
-            }
-
             return result;
+
         }
+
+
+
+        //T GetInstance<T>() where T : new()
+        //{
+        //    T instance = new T();
+        //    return instance;
+        //}
     }
+
+
+
+
 }
+
+
+
+
